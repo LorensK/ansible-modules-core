@@ -248,8 +248,13 @@ class SysctlModule(object):
         if self.platform == 'openbsd':
             # openbsd doesn't accept -w, but since it's not needed, just drop it
             thiscmd = "%s %s=%s" % (self.sysctl_cmd, token, value)
+        elif self.platform == 'freebsd':
+            # neither freebsd not openbsd use -e to ignore unknown keys
+            thiscmd = [self.sysctl_cmd, '-w', "%s=%s" % (token, value)]
         else:
-            thiscmd = "%s -w %s=%s" % (self.sysctl_cmd, token, value)
+             thiscmd = [self.sysctl_cmd, '-w', "%s=%s" % (token, value)]
+             if self.args['ignoreerrors']:
+                 thiscmd.insert(1, '-e')
         rc,out,err = self.module.run_command(thiscmd)
         if rc != 0:
             self.module.fail_json(msg='setting %s failed: %s' % (token, out + err))
